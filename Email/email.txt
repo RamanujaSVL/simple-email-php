@@ -1,0 +1,158 @@
+//Registration Page Script
+
+<?php require 'Connections/ram.php'; ?>
+<?php
+if(isset($_POST['submit']))
+{
+	$uname=$_POST['name'];
+	$umail=$_POST['email'];
+	$mobile=$_POST['phno'];
+	$pwd=$_POST['psswd'];
+	$sql=$con->query("INSERT INTO userbase(name,mobile,email,passwd) VALUES('{$uname}','{$mobile}','{$umail}','{$pwd}')");
+	if($sql)
+	{
+	header('Location:registrationsuccess.php');
+	}
+	else
+	echo"<script>myfun();</script>";
+}
+?>
+
+//Sign In Script
+
+<?php
+	require 'Connections/ram.php';
+	$host="localhost"; 
+	$username="root"; 
+	$password=""; 
+	$db_name="ramanuja";
+	$tbl_name="userbase";
+
+		// Connect to server and select databse.
+		$temp=mysqli_connect("$host", "$username", "$password")or die("cannot connect"); 
+		mysqli_select_db($temp,"$db_name")or die("cannot select DB");
+		if(isset($_POST['login']))
+		{
+			$em=$_POST['mail'];
+			$pw=$_POST['psswd'];
+			if($em!=""&&$pw!="")
+			$result=mysqli_query($temp,"SELECT *FROM userbase WHERE email='$em' AND passwd='$pw'");
+			
+			if($result==false)
+			{
+				die(mysql_error());
+			}
+			//checks whether Username is correct or not
+			$count=mysqli_num_rows($result);
+			
+			session_start();
+			$_SESSION['name']=$em;
+			//if correct
+			if($count>0)
+			header('Location:Home.php');
+			//if wrong
+			else
+			echo"<script>myfun();</script>";
+		}
+?>
+
+//After Sign In Page Script
+<?php
+//if(true)
+session_start();
+$current_user=$_SESSION['name'];
+echo"<p style='text-align:center;font-size:15px;font-family:Segoe, 'Segoe UI', 'DejaVu Sans', 'Trebuchet MS', Verdana, sans-serif; font-weight:bold;'>Current User:$current_user</p>";
+?>//The above code is to print current User
+
+//Compose Page
+<?php
+if(true)
+session_start();
+$current_user=$_SESSION['name'];
+echo"<p style='text-align:center;font-size:15px;font-weight:bold;margin-right:260px'>Current User:$current_user</p>";
+?>
+<div class="compose_blg" style="margin:10px 0px 0px 425px;">
+<form action="#" method="post">
+<input type="text" placeholder="To" name="to" required="required">
+<input type="text" placeholder="Subject" name="sub" required="required">
+<textarea cols="50" rows="15" placeholder="Enter Your Message" class="message" name="msg" required></textarea>
+<input type="submit" value="SEND" name="send">
+<?php   
+
+	$host="localhost"; 
+	$username="root"; 
+	$password=""; 
+	$db_name="ramanuja";
+	$tbl_name="message";
+	$temp=mysqli_connect("$host", "$username", "$password")or die("cannot connect"); 
+	mysqli_select_db($temp,"$db_name")or die("cannot select DB");
+	if(isset($_POST['send']))
+	{
+		$to_mail=$_POST['to'];
+		$sub_mail=$_POST['sub'];
+		$msg_mail=$_POST['msg'];
+		
+		$result=
+		mysqli_query($temp,"INSERT INTO `ramanuja`.`message` (`msgid`, `from_mail`, `to_mail`, `subject`, `message`, `senttime`) 
+		VALUES (NULL,'{$current_user}', '{$to_mail}', '{$sub_mail}', '{$msg_mail}', NOW());");
+echo"</form></div>";
+		if($result)
+			echo"<span>Mail Sent!</span>";
+			else
+			echo"<span>Mail NOT Sent!".mysqli_error($temp)."</span>";
+	}
+?>
+
+//Inbox Page
+<?php
+session_start();
+$host="localhost"; 
+	$username="root"; 
+	$password=""; 
+	$db_name="ramanuja";
+	$tbl_name="message";
+	$temp=mysqli_connect("$host", "$username", "$password")or die("cannot connect"); 
+	mysqli_select_db($temp,"$db_name")or die("cannot select DB");
+	$current_user=$_SESSION['name'];
+	echo"<p style='text-align:center;font-size:15px;font-family:Segoe, 'Segoe UI', 'DejaVu Sans', 'Trebuchet MS', Verdana, sans-serif; font-weight:bold;margin-right:260px'>Current User:$current_user</p>";
+	$sql="SELECT * FROM `message` WHERE to_mail='{$current_user}'";
+	$result=mysqli_query($temp,$sql);
+	$count=mysqli_num_rows($result);
+	if($count==0)
+		{
+			echo "<a>No Mail</a>";
+		}
+		else
+		{
+			while($row = mysqli_fetch_assoc($result)) 
+			{	
+				echo "<tr>";
+				echo "<td><a href='viewmail.php?id=". $row["msgid"]. "'>". $row["from_mail"]. "</a> </td><td>" . $row["subject"]. "</td><td>".                $row["senttime"]."</td>";
+				echo "</tr>";
+			}
+		}
+	?>
+
+//View Mail Page
+
+<?php
+session_start();
+	$current_user=$_SESSION['name'];
+	echo"<p style='text-align:center;font-size:15px;font-family:Segoe, 'Segoe UI', 'DejaVu Sans', 'Trebuchet MS', Verdana, sans-serif; font-weight:bold;margin-right:260px'>Current User:$current_user</p>";
+$host="localhost"; 
+	$username="root"; 
+	$password=""; 
+	$db_name="ramanuja";
+	$tbl_name="message";
+	$temp=mysqli_connect("$host", "$username", "$password")or die("cannot connect"); 
+	mysqli_select_db($temp,"$db_name")or die("cannot select DB");
+	$sql="SELECT * FROM `message` WHERE msgid='".$_GET['id']."'";
+	$result=mysqli_query($temp,$sql);
+	$row = mysqli_fetch_assoc($result);
+	echo "<br>"; 
+	echo "<p class='ab'>From: ".$row["from_mail"]."</p>";
+	echo "<br>"; 
+	echo "<p class='ab'>Sub: ".$row["subject"]."</p>";
+	echo "<br>"; 
+	echo "<p class='ab'>Message:<br>".$row["message"]."</p>";
+	?>
